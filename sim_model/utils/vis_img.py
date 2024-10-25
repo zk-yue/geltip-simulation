@@ -27,7 +27,6 @@ def to_normed_rgb(depth):
     d = d.astype(np.uint8)
     return np.stack([d, d, d], axis=2)
 
-
 def to_panel(frames, shape=(2, 2)):
     return np.concatenate([
         np.concatenate([
@@ -36,7 +35,6 @@ def to_panel(frames, shape=(2, 2)):
         ], axis=1)
         for i in range(shape[0])
     ], axis=0)
-
 
 def show_panel(frames, shape=None):
     if shape is None:
@@ -51,5 +49,4 @@ def show_panel(frames, shape=None):
     for i in range(shape[0]):
         for j in range(shape[1]):
             axes[i][j].imshow(frames[i * shape[1] + j])
-
     plt.show()

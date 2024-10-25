@@ -1,6 +1,7 @@
 import math
 import os
-
+import sys
+sys.path.append("/home/yuezk/yzk/geltip-simulation")
 from yarok import Platform, PlatformMJC, PlatformHW, ConfigBlock, Injector, component
 
 from math import pi, cos, sin

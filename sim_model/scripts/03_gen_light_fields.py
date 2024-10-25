@@ -12,7 +12,8 @@ import trimesh.intersections as intersections
 from trimesh.proximity import nearby_faces
 
 import potpourri3d as pp3d
-
+import sys
+sys.path.append("/home/yuezk/yzk/geltip-simulation")
 from sim_model.utils.maths import normalize_vectors, partial_derivative, proj_vectors, normals
 from sim_model.utils.camera import circle_mask, get_camera_matrix, depth2cloud
 

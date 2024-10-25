@@ -7,7 +7,10 @@ import os
 
 from time import time
 
-from sim_model.model import SimulationModel
+import sys
+sys.path.append("/home/yuezk/yzk/geltip-simulation")
+# from sim_model.model import SimulationModel
+from experimental_setup.thumb.sim_model.model import SimulationModel
 from sim_model.utils.camera import circle_mask
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -42,7 +45,7 @@ class GelTipInterfaceMJC:
 
         try:
             cloud, fields = SimulationModel.load_assets(
-                os.path.join(__location__, '../../sim_model/assets/'),
+                os.path.join(__location__, 'sim_assets'),
                 config['field_size'],
                 self.frame_size,
                 config['field_name'],
@@ -65,7 +68,7 @@ class GelTipInterfaceMJC:
             })
             self.last_update = 0
         except:
-            print('[warning] failed to load simulation model')
+            print('[warning] failed to load simulation model_2')
 
     def read(self):
         t = time()

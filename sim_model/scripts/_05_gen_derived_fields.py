@@ -3,11 +3,12 @@ from math import sqrt
 
 import cv2
 import numpy as np
+import sys
+sys.path.append("/home/yuezk/yzk/geltip-simulation")
+from experimental_setup.thumb.sim_model.model import normalize_vectors, derivative, SimulationModel
+from experimental_setup.thumb.sim_model.model import get_cloud_from_depth, get_camera_matrix
 
-from sim_model import normalize_vectors, derivative, SimulationModel
-from sim_model import get_cloud_from_depth, get_camera_matrix
-
-assets_path = os.path.dirname(os.path.abspath(__file__)) + '/../assets/'
+assets_path = os.path.dirname(os.path.abspath(__file__)) + '/../../experimental_setup/geltip/sim_assets'
 
 
 def norm(v):

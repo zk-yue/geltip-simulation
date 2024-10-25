@@ -1,7 +1,8 @@
 import os
 import numpy as np
 import cv2
-
+import sys
+sys.path.append("/home/yuezk/yzk/geltip-simulation")
 from sim_model.model import SimulationModel
 from sim_model.utils.camera import circle_mask
 

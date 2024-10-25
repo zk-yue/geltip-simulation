@@ -3,7 +3,8 @@ from yarok import Platform, PlatformMJC, ConfigBlock, Injector, component
 
 import os
 import numpy as np
-
+import sys
+sys.path.append("/home/yuezk/yzk/geltip-simulation")
 from experimental_setup.geltip.geltip import GelTip
 from sim_model.utils.vis_img import to_normed_rgb, to_panel
 

@@ -4,9 +4,10 @@ from math import pi, sin, cos
 import numpy as np
 
 from trimesh.exchange.load import load
-
+import sys
+sys.path.append("/home/yuezk/yzk/geltip-simulation")
 from sim_model.model import normalize_vectors, partial_derivative
-from sim_model.model import show_field
+from sim_model.utils.vis_mesh import show_field
 import cv2
 
 from sim_model.utils.camera import get_camera_matrix, depth2cloud

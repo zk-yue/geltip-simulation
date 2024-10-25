@@ -1,5 +1,6 @@
 import os
-
+import sys
+sys.path.append("/home/yuezk/yzk/geltip-simulation")
 from yarok import Platform, PlatformMJC, PlatformHW, ConfigBlock, component
 
 from math import pi, cos, sin
@@ -233,8 +234,8 @@ def main():
         'random': '0 1 0 -1 0 0'
     }
     objects = [
-        # 'cone',
-        'sphere',
+        'cone',
+        # 'sphere',
         # 'cylinder',
         # 'cylinder_shell',
         # 'dot_in',

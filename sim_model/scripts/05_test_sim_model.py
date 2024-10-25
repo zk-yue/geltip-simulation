@@ -3,18 +3,20 @@ import time
 import numpy as np
 import os
 import cv2
-
+import sys
+sys.path.append("/home/yuezk/yzk/geltip-simulation")
 from sim_model.model import SimulationModel
 from sim_model.utils.camera import circle_mask
 from sim_model.utils.vis_img import to_panel
+from scipy.ndimage import gaussian_filter
 
 fields_size = (120, 160)
 sim_size = (640, 480)
 # sim_size = (320, 240)
-# field = 'linear'
+field = 'linear'
 # field = 'geodesic'
 # field = 'plane'
-field = 'geodesic'
+# field = 'geodesic'
 # field = 'planes'
 # field = 'geodesic'
 # field = 'transport'
@@ -32,7 +34,7 @@ stack = cv2.resize(cv2.cvtColor(cv2.cvtColor(cv2.imread(assets_path + '/bkg.png'
 model = SimulationModel(**{
     'ia': 0.5,
     'fov': 90,
-    'light_sources': [
+    'light_sources': [ 
         {'field': light_fields[1], 'color': [255, 0, 0], 'id': 0.5, 'is': 0.1},  # [108, 82, 255]
         {'field': light_fields[2], 'color': [0, 255, 0], 'id': 0.5, 'is': 0.1},  # [255, 130, 115]
         {'field': light_fields[0], 'color': [0, 0, 255], 'id': 0.5, 'is': 0.1},  # [120, 255, 153]
@@ -40,8 +42,8 @@ model = SimulationModel(**{
     'background_depth': cv2.resize(np.load(assets_path + 'bkg.npy'), sim_size),
     # 'cloud_map': cloud,
     # 'background_img': np.stack([np.zeros(sim_size[::-1]), np.zeros(sim_size[::-1]), np.zeros(sim_size[::-1])], axis=2) * 0.5,
-    # 'background_img': (cv2.cvtColor(cv2.imread(assets_path + '/bkg.png'), cv2.COLOR_RGB2BGR) / 255).astype(np.float32),
-    'background_img': (stack / 255).astype(np.float32),
+    'background_img': (cv2.cvtColor(cv2.imread(assets_path + '/bkg.png'), cv2.COLOR_RGB2BGR) / 255).astype(np.float32),
+    # 'background_img': (stack / 255).astype(np.float32),
     'elastomer_thickness': 0.004,
     'min_depth': 0.026,
     'texture_sigma': 0.00001,
@@ -49,7 +51,7 @@ model = SimulationModel(**{
     'rectify_fields': rectify_fields
 })
 # ('bkg' if i == 0 else 'depth_' +
-depths = [np.load(assets_path + (str(i)) + '.npy') for i in range(6)]
+depths = [np.load(assets_path + (str(i)) + '.npy') for i in range(4)]
 m = circle_mask(sim_size)
 m3 = np.stack([m, m, m], axis=2)
 
@@ -65,19 +67,26 @@ m3 = np.stack([m, m, m], axis=2)
 # cv2.imshow('frame', sim_frame)
 # cv2.waitKey(-1)
 
+# for i, depth in enumerate(depths):
+#     cv2.imshow("depth",depth)
+#     cv2.waitKey(-1)
+
+sigma = 0.5  # 设置高斯滤波的标准差
+for m in range(len(depths)):
+    depths[m]= gaussian_filter(depths[m], sigma=sigma)
+
 tactile_rgb = [
     cv2.cvtColor(model.generate(cv2.resize(depth, sim_size)), cv2.COLOR_RGB2BGR)
     for i, depth in enumerate(depths)
-    # if i > 4
 ]
 
-cv2.imshow('tactile_rgb', to_panel(tactile_rgb, shape=(1, 6)))
+cv2.imshow('tactile_rgb', to_panel(tactile_rgb, shape=(1, 4)))
 cv2.waitKey(-1)
 
 # tactile_rgb = [
 #     np.maximum(np.zeros(frame.shape), frame.astype(np.float32) - tactile_rgb[0].astype(np.float32)).astype(np.uint8)
 #     for frame in tactile_rgb
-# ]
+# ] 
 #
 # for frame in tactile_rgb:
 #     print('imshow', frame.shape, frame.dtype, frame.min(), frame.max())

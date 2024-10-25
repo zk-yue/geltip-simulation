@@ -65,7 +65,7 @@ class ThumbInterfaceMJC:
             })
             self.last_update = 0
         except:
-            print('[warning] failed to load simulation model')
+            print('[warning] failed to load simulation model_1')
 
     def read(self):
         t = time()

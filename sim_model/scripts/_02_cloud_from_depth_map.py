@@ -3,13 +3,15 @@ import os
 import open3d as o3d
 import cv2
 import numpy as np
+import sys
+sys.path.append("/home/yuezk/yzk/geltip-simulation")
+from sim_model.utils.camera import get_camera_matrix, get_cloud_from_depth,circle_mask
 
-from sim_model \
-    import get_camera_matrix, get_cloud_from_depth, circle_mask
-
-base = os.path.dirname(os.path.abspath(__file__)) + '/../assets/'
+base = os.path.dirname(os.path.abspath(__file__)) + '/../../experimental_setup/geltip/sim_assets'
+# '../../experimental_setup/geltip/sim_assets'
 
 depth = np.load(base + '/bkg.npy')
+
 
 # cloud_size = (32, 24)
 # cloud_size = (64, 48)
@@ -20,6 +22,9 @@ cloud_size = (160, 120)
 fov = 90
 
 depth = cv2.resize(depth, cloud_size)
+# depth[np.isinf(depth)] = 0
+# depth[np.isnan(depth)] = 0
+# depth = o3d.geometry.Image(depth)
 
 cam_matrix = get_camera_matrix(cloud_size, fov_deg=fov)
 

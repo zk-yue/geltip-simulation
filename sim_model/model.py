@@ -7,8 +7,8 @@ import open3d as o3d
 from sim_model.utils.camera import get_camera_matrix, depth2cloud
 from sim_model.utils.maths import normalize_vectors, gkern2, dot_vectors, normals, proj_vectors, partial_derivative
 from sim_model.utils.vis_img import to_normed_rgb
-
-
+from sim_model.utils.camera import get_camera_matrix, get_cloud_from_depth,circle_mask
+from scipy.ndimage import gaussian_filter
 class SimulationModel:
 
     def __init__(self, **config):
@@ -150,6 +150,8 @@ class SimulationModel:
 
         # surface point-cloud
         s = depth2cloud(self.cam_matrix, depth)
+        # s_points = get_cloud_from_depth(self.cam_matrix, protrusion_map)
+        # o3d.visualization.draw_geometries([s_points])
 
         # Optical Rays = s - 0
         optical_rays = normalize_vectors(s)
@@ -163,7 +165,7 @@ class SimulationModel:
         # binary_map = np.where(protrusion_map > 0.000001, 1, 0).astype(np.float32)
         # areas_x = partial_derivative(binary_map, 'x')
         # areas_y = partial_derivative(binary_map, 'y')
-        #
+        
         # sign_or_x = np.sign(optical_rays[:, :, 0])
         # sign_or_y = np.sign(optical_rays[:, :, 1])
         # sign_a_x = np.sign(areas_x)
@@ -171,19 +173,22 @@ class SimulationModel:
         #
         # occluded_areas = np.clip((np.equal(sign_a_x, sign_or_x).astype(np.float32) +
         #                  np.equal(sign_a_y, sign_or_y).astype(np.float32)) / 0.05, 0, 1)
-        #
+        
         # kernel = np.ones((3, 3), np.uint8)
         # occluded_areas = cv2.dilate(occluded_areas, kernel, iterations=1)
         # occluded_areas = cv2.filter2D(occluded_areas, -1, gkern2(55, 5))
         # occluded_areas = occluded_areas - np.min(occluded_areas)
         # occluded_areas = occluded_areas / np.max(occluded_areas)
         # occluded_areas = (1 - binary_map) * occluded_areas
+        # 应用高斯滤波
+        # sigma = 0.8  # 设置高斯滤波的标准差
+        # depth = gaussian_filter(depth, sigma=sigma)
 
         # elastic deformation (as in the paper, submitted to RSS)
         if self.apply_elastic_deformation:
             elastic_deformation = cv2.filter2D(self.bkg_depth - depth, -1, gkern2(55, 5))
-
             elastic_deformation = np.maximum((1 - occluded_areas) * elastic_deformation, np.zeros_like(occluded_areas))
+            # elastic_deformation = (1 - occluded_areas) * elastic_deformation
             depth = np.minimum(depth, self.bkg_depth - elastic_deformation).astype(np.float32)
             print(depth.dtype)
 
@@ -201,17 +206,23 @@ class SimulationModel:
         contact_diff = np.abs(protrusion_map)
 
         # Clip the difference to a maximum value (e.g., 0.03)
-        contact_diff = np.clip(contact_diff, 0, 0.03)
+        contact_diff = np.clip(contact_diff, 0, 0.0005)
 
         # Normalize the difference to a percentage
-        contact_percentage = contact_diff / 0.03
+        contact_percentage = contact_diff / 0.0005
+        cv2.imshow("contact_percentage",(contact_percentage*255).astype(np.uint8))
 
         # Multiply the internal_shadow by the percentage and clip it to a valid range (0 to 1)
         shadow_factor = np.clip(self.internal_shadow * contact_percentage, 0, 1)
-
+        cv2.imshow("shadow_factor",(shadow_factor/0.15*255).astype(np.uint8))
         ambient_component = self.background_img * (self.ia - shadow_factor)[:, :, np.newaxis]
 
+        cv2.imshow("ambient_component",ambient_component)
+        
+
         I = ambient_component + np.sum([self._spec_diff(lm, v, n, s) for lm in self.lights], axis=0)
+
+        cv2.imshow("add",(np.sum([self._spec_diff(lm, v, n, s) for lm in self.lights], axis=0)*255).astype(np.uint8))
 
         I_rgb = (I * 255.0)
         I_rgb[I_rgb > 255.0] = 255.0
@@ -224,6 +235,8 @@ class SimulationModel:
         # Convert occluded_map to 3-channel image
         occluded_map_3channel = cv2.cvtColor(occluded_map, cv2.COLOR_GRAY2BGR)
 
+        cv2.imshow("occluded_map_3channel",cv2.cvtColor(occluded_map_3channel, cv2.COLOR_BGR2RGB))
+ 
         # Overlay the occluded_map over I_rgb with 50% opacity
         I_rgb_overlay = cv2.addWeighted(I_rgb, 0.5, occluded_map_3channel, 0.5, 0)
 

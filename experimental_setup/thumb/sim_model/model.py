@@ -3,10 +3,10 @@ import cv2
 import numpy as np
 
 import scipy.ndimage.filters as fi
+from sim_model.utils.camera import get_camera_matrix, depth2cloud,get_cloud_from_depth
 
-from sim_model \
-    import get_camera_matrix, get_cloud_from_depth, depth2cloud
-from sim_model import show_field, plot_depth_lines
+
+# from sim_model import show_field, plot_depth_lines
 
 
 def dot(a, b):
