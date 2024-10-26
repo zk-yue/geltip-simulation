@@ -13,9 +13,9 @@ from scipy.ndimage import gaussian_filter
 fields_size = (120, 160)
 sim_size = (640, 480)
 # sim_size = (320, 240)
-field = 'linear'
+# field = 'linear'
 # field = 'geodesic'
-# field = 'plane'
+field = 'plane'
 # field = 'geodesic'
 # field = 'planes'
 # field = 'geodesic'
@@ -32,7 +32,7 @@ light_fields = SimulationModel.load_assets(assets_path, fields_size, sim_size, f
 stack = cv2.resize(cv2.cvtColor(cv2.cvtColor(cv2.imread(assets_path + '/bkg.png'), cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR), sim_size)
 
 model = SimulationModel(**{
-    'ia': 0.5,
+    'ia': 0.7,
     'fov': 90,
     'light_sources': [ 
         {'field': light_fields[1], 'color': [255, 0, 0], 'id': 0.5, 'is': 0.1},  # [108, 82, 255]

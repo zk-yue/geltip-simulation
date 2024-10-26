@@ -50,9 +50,9 @@ class AnetA30InterfaceMJC:
 
     def is_at(self, position):
         sensor_data = [d / self.mm2ctrl for d in self.interface.sensordata()]
-
+        # print("pose now:", sensor_data)
         return self.stopped_steps > 10 and \
-               sum([abs(position[i] - sensor_data[i]) for i in range(3)]) < 0.25  # 0.25 mm
+               sum([abs(position[i] - sensor_data[i]) for i in range(3)]) < 2  # 0.25 mm
 
     def step(self):
         self.last_p = self.p

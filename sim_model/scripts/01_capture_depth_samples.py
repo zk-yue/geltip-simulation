@@ -132,7 +132,7 @@ class CaptureDepthSampleBehaviour:
             for i, g in enumerate(self.sensors)
         ]
 
-        cv2.imshow('frames', to_panel(frames, shape=(2, 3)))
+        cv2.imshow('frames', to_panel(frames, shape=(6, 1)))
         cv2.waitKey(-1)
 
 
