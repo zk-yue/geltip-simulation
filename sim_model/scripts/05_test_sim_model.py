@@ -67,9 +67,9 @@ m3 = np.stack([m, m, m], axis=2)
 # cv2.imshow('frame', sim_frame)
 # cv2.waitKey(-1)
 
-# for i, depth in enumerate(depths):
-#     cv2.imshow("depth",depth)
-#     cv2.waitKey(-1)
+for i, depth in enumerate(depths):
+    cv2.imshow("depth",depth)
+    cv2.waitKey(-1)
 
 sigma = 0.5  # 设置高斯滤波的标准差
 for m in range(len(depths)):
@@ -79,6 +79,9 @@ tactile_rgb = [
     cv2.cvtColor(model.generate(cv2.resize(depth, sim_size)), cv2.COLOR_RGB2BGR)
     for i, depth in enumerate(depths)
 ]
+
+for i in range(len(tactile_rgb)):
+    cv2.imwrite('/home/yuezk/yzk/geltip-simulation/result/output_image'+field+str(i)+'.png', tactile_rgb[i])
 
 cv2.imshow('tactile_rgb', to_panel(tactile_rgb, shape=(1, 4)))
 cv2.waitKey(-1)

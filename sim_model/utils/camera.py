@@ -38,5 +38,6 @@ def get_cloud_from_depth(cam_matrix, depth):
 
 
 def depth2cloud(cam_matrix, depth):
-    points = get_cloud_from_depth(cam_matrix, depth).points
+    points = get_cloud_from_depth(cam_matrix, depth)
+    points = points.points
     return np.array(points).reshape((depth.shape[0], depth.shape[1], 3))

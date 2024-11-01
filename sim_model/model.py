@@ -9,6 +9,19 @@ from sim_model.utils.maths import normalize_vectors, gkern2, dot_vectors, normal
 from sim_model.utils.vis_img import to_normed_rgb
 from sim_model.utils.camera import get_camera_matrix, get_cloud_from_depth,circle_mask
 from scipy.ndimage import gaussian_filter
+import matplotlib.pyplot as plt
+
+from scipy.signal import convolve2d
+
+def gaussian_kernel(size, sigma=1):
+    """生成自定义高斯核"""
+    ax = np.arange(-size // 2 + 1., size // 2 + 1.)
+    xx, yy = np.meshgrid(ax, ax)
+    kernel = np.exp(-0.5 * (np.square(xx) + np.square(yy)) / np.square(sigma))
+    return kernel / np.sum(kernel)
+
+image_show_flag = False
+
 class SimulationModel:
 
     def __init__(self, **config):
@@ -147,6 +160,9 @@ class SimulationModel:
     def generate(self, depth):
         # Calculate the protrusion_map
         protrusion_map = self.bkg_depth - depth
+        if image_show_flag == True:
+            cv2.imshow("protrusion_map",(protrusion_map).astype(np.uint8))
+
 
         # surface point-cloud
         s = depth2cloud(self.cam_matrix, depth)
@@ -159,8 +175,9 @@ class SimulationModel:
         # Calculate the occluded areas
         occluded_areas = self.calculate_occluded_areas(protrusion_map, optical_rays)
         print('areas', np.min(occluded_areas), np.max(occluded_areas))
-        cv2.imshow('areas', to_normed_rgb(occluded_areas))
-        cv2.waitKey(-1)
+        if image_show_flag == True:
+            cv2.imshow('areas', to_normed_rgb(occluded_areas))
+        # cv2.waitKey(-1)
 
         # binary_map = np.where(protrusion_map > 0.000001, 1, 0).astype(np.float32)
         # areas_x = partial_derivative(binary_map, 'x')
@@ -186,7 +203,16 @@ class SimulationModel:
 
         # elastic deformation (as in the paper, submitted to RSS)
         if self.apply_elastic_deformation:
-            elastic_deformation = cv2.filter2D(self.bkg_depth - depth, -1, gkern2(55, 5))
+            # elastic_deformation = cv2.filter2D(self.bkg_depth - depth, -1, gkern2(55, 5))
+            elastic_deformation = self.bkg_depth - depth
+
+
+            # 设置高斯核大小和标准差
+            kernel_size = 10  # 高斯核大小
+            sigma = 5  # 标准差
+            gaussian_k = gaussian_kernel(kernel_size, sigma)
+            # 使用自定义高斯核进行卷积
+            elastic_deformation = convolve2d(elastic_deformation, gaussian_k, mode='same', boundary='wrap')
             elastic_deformation = np.maximum((1 - occluded_areas) * elastic_deformation, np.zeros_like(occluded_areas))
             # elastic_deformation = (1 - occluded_areas) * elastic_deformation
             depth = np.minimum(depth, self.bkg_depth - elastic_deformation).astype(np.float32)
@@ -204,25 +230,36 @@ class SimulationModel:
 
         # Calculate the absolute difference between bkg_depth and depth using the precomputed protrusion_map
         contact_diff = np.abs(protrusion_map)
-
-        # Clip the difference to a maximum value (e.g., 0.03)
-        contact_diff = np.clip(contact_diff, 0, 0.0005)
+        if image_show_flag == True:
+            cv2.imshow("contact_diff",contact_diff)
+        # plt.figure(figsize=(8, 6))
+        # plt.imshow(contact_diff, cmap='viridis')  # 'viridis' 是一种常用的颜色映射方案
+        # plt.colorbar(label='Height')  # 添加颜色条，标注高度单位
+        # plt.title("Height Map")
+        # plt.xlabel("X-axis")
+        # plt.ylabel("Y-axis")
+        # plt.show()
+        # Clip the difference to a maximum value (e.g., 0.03) 05_test_sim_model.py 用 0.0005
+        contact_diff = np.clip(contact_diff, 0, 0.0008)
 
         # Normalize the difference to a percentage
-        contact_percentage = contact_diff / 0.0005
-        cv2.imshow("contact_percentage",(contact_percentage*255).astype(np.uint8))
+        contact_percentage = contact_diff / 0.0008
+        if image_show_flag == True:
+            cv2.imshow("contact_percentage",(contact_percentage*255).astype(np.uint8))
 
         # Multiply the internal_shadow by the percentage and clip it to a valid range (0 to 1)
         shadow_factor = np.clip(self.internal_shadow * contact_percentage, 0, 1)
-        cv2.imshow("shadow_factor",(shadow_factor/0.15*255).astype(np.uint8))
+        if image_show_flag == True:
+            cv2.imshow("shadow_factor",(shadow_factor/0.15*255).astype(np.uint8))
         ambient_component = self.background_img * (self.ia - shadow_factor)[:, :, np.newaxis]
 
-        cv2.imshow("ambient_component",ambient_component)
+        if image_show_flag == True:
+            cv2.imshow("ambient_component",ambient_component)
         
-
         I = ambient_component + np.sum([self._spec_diff(lm, v, n, s) for lm in self.lights], axis=0)
 
-        cv2.imshow("add",(np.sum([self._spec_diff(lm, v, n, s) for lm in self.lights], axis=0)*255).astype(np.uint8))
+        if image_show_flag == True:
+            cv2.imshow("add",(np.sum([self._spec_diff(lm, v, n, s) for lm in self.lights], axis=0)*255).astype(np.uint8))
 
         I_rgb = (I * 255.0)
         I_rgb[I_rgb > 255.0] = 255.0
@@ -235,7 +272,8 @@ class SimulationModel:
         # Convert occluded_map to 3-channel image
         occluded_map_3channel = cv2.cvtColor(occluded_map, cv2.COLOR_GRAY2BGR)
 
-        cv2.imshow("occluded_map_3channel",cv2.cvtColor(occluded_map_3channel, cv2.COLOR_BGR2RGB))
+        if image_show_flag == True:
+            cv2.imshow("occluded_map_3channel",cv2.cvtColor(occluded_map_3channel, cv2.COLOR_BGR2RGB))
  
         # Overlay the occluded_map over I_rgb with 50% opacity
         I_rgb_overlay = cv2.addWeighted(I_rgb, 0.5, occluded_map_3channel, 0.5, 0)
@@ -245,8 +283,9 @@ class SimulationModel:
 
         # Display the occluded_map and the overlay image
         # cv2.imshow('Occluded Map', occluded_map)
-        cv2.imshow('Overlay Image', I_rgb_overlay)
-        cv2.imshow('Image', I_rgb)
-        cv2.waitKey(-1)
+        if image_show_flag == True:
+            cv2.imshow('Overlay Image', I_rgb_overlay)
+            cv2.imshow('Image', I_rgb)
+            cv2.waitKey(-1)
 
         return I_rgb

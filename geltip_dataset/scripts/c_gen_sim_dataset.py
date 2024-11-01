@@ -5,7 +5,7 @@ import sys
 sys.path.append("/home/yuezk/yzk/geltip-simulation")
 from sim_model.model import SimulationModel
 from sim_model.utils.camera import circle_mask
-
+import matplotlib.pyplot as plt
 
 def main():
     fields_size = (120, 160)
@@ -78,19 +78,22 @@ def main():
 
     __location__ = os.path.dirname(os.path.abspath(__file__))
 
-    dataset_path = __location__ + '/../dataset/'
+    dataset_path = __location__ + '/../../dataset'
     assets_path = __location__ + '/../../experimental_setup/geltip/sim_assets/'
 
     assets = {n: SimulationModel.load_assets(assets_path, fields_size, sim_size[::-1], n, n_fields) for n in
               field_names}
 
     light_coeffs = [
-        {'color': [87, 159, 233], 'id': 0.95, 'is': 0.1},  # blue
-        {'color': [197, 226, 241], 'id': 0.7, 'is': 0.1},  # green
-        {'color': [196, 94, 255], 'id': 0.95, 'is': 0.1},  # red
+        # {'color': [87, 159, 233], 'id': 0.95, 'is': 0.1},  # blue
+        # {'color': [197, 226, 241], 'id': 0.7, 'is': 0.1},  # green
+        # {'color': [196, 94, 255], 'id': 0.95, 'is': 0.1},  # red
         # {'color': [104, 175, 255], 'id': 0.8, 'is': 0.1},  # blue  # [120, 255, 153]
         # {'color': [154, 144, 255], 'id': 0.5, 'is': 0.1},  # green # [255, 130, 115]
         # {'color': [196, 94, 255], 'id': 0.8, 'is': 0.1},  # red # [108, 82, 255]
+        {'color': [255, 0, 0], 'id': 0.5, 'is': 0.1},
+        {'color': [0, 255, 0], 'id': 0.5, 'is': 0.1},
+        {'color': [0, 0, 255], 'id': 0.5, 'is': 0.1},
     ]
 
     light_sources = {
@@ -99,13 +102,28 @@ def main():
         ] for n in field_names
     }
 
+    bkg_show = np.load("/home/yuezk/yzk/geltip-simulation/experimental_setup/geltip/sim_assets/bkg.npy")
+    # s_points = get_cloud_from_depth(self.cam_matrix, protrusion_map)
+    # o3d.visualization.draw_geometries([s_points])
+    cv2.imshow("bkg",bkg_show)
+    cv2.waitKey(-1)
+    plt.figure(figsize=(8, 6))
+    plt.imshow(bkg_show, cmap='viridis')  # 'viridis' 是一种常用的颜色映射方案
+    plt.colorbar(label='Height')  # 添加颜色条，标注高度单位
+    plt.title("Height Map")
+    plt.xlabel("X-axis")
+    plt.ylabel("Y-axis")
+    plt.show()
+
     # light_sources['combined'] = light_sources['linear'] + light_sources['geodesic']
     # cloud = assets['linear'][0]
 
-    for field in fields:
+    # for field in fields:
+    for field in ["plane"]:
         for elastic_deformation in [True, False]:
 
-            for bkg in ['solid', 'real', 'no']:
+            # for bkg in ['solid', 'real', 'no']:
+            for bkg in ['real']:
                 pr = "a" if sim_set.startswith("a") else ""
                 el = "_elastic" if elastic_deformation else ""
                 set_name = f'sim_{pr}{field}{el}_{bkg}bg'
@@ -117,7 +135,7 @@ def main():
                 for obj in objects:
 
                     if bkg == 'real':
-                        bkg_bgr = cv2.imread(f'{dataset_path}/real_rgb_aligned/{obj}/bkg.png')
+                        bkg_bgr = cv2.imread(assets_path + '/bkg.png')
                         bkg_rgb = cv2.cvtColor(bkg_bgr, cv2.COLOR_BGR2RGB)
                         bkg_rgb = bkg_rgb * mask3 / 225.0
                         bkg_img = bkg_rgb
@@ -134,7 +152,7 @@ def main():
                         'ia': 0.8,
                         'fov': 90,
                         'light_sources': light_sources[field],
-                        'background_depth': np.load(assets_path + 'bkg.npy'),
+                        'background_depth': np.load("/home/yuezk/yzk/geltip-simulation/experimental_setup/geltip/sim_assets/bkg.npy"),
                         # 'cloud_map': cloud,
                         'background_img': bkg_img,
                         'elastomer_thickness': 0.004,
@@ -147,7 +165,9 @@ def main():
                     for i in range(set_params[sim_set]['rows']):
                         for j in range(set_params[sim_set]['contacts']):
                             # try:
-                            depth_map = np.load(f'{dataset_path}/sim_{sim_set}/{obj}/{i}_{j}.npy')
+                            depth_map = np.load(f'{dataset_path}/sim_{sim_set}/{obj}/{i}_{j}.npy')    
+                            cv2.imshow("depth",depth_map)
+                            # cv2.waitKey(-1)
                             # rgb_real = (cv2.cvtColor(
                             #     cv2.imread(
                             #         dataset_path + 'real_rgb_aligned/' + obj + '/' + str(i) + '_' + str(j) + '.png'),
@@ -163,8 +183,12 @@ def main():
                             #     ],
                             #     (1, 2))
 
-                            filename = f'{dataset_path}{set_name}/{obj}/{i}_{j}.png'
-                            cv2.imwrite(filename, cv2.cvtColor(rgb, cv2.COLOR_BGR2RGB) * mask3)
+                            filename = f'{dataset_path}/{set_name}/{obj}/{i}_{j}.png'
+                            print('saving: ' + filename)
+                            cv2.imwrite(filename, cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR))
+                            cv2.imshow('rgb', cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR))
+                            cv2.waitKey(-1)
+                            # cv2.imwrite(filename, cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR) * mask3)
                             # print('saving: ' + filename)
                         # except Exception:
                         #     print('FAILED. ' + obj + '/' + str(i) + '_' + str(j) + '.npy')
